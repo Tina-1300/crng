@@ -1,0 +1,67 @@
+name: CI - Multi-OS Unit Tests
+
+on:
+    push:
+        branches:
+            - main
+            - dev
+            - "feat/**"
+            - "feature/**"
+            - "fix/**"
+            - "bugfix/**"
+            - "refact/**"
+            - "refactor/**"
+            - "hotfix/**"
+            - "test/**"
+            - "tests/**"
+            - "ci/**"
+            - "chore/**"
+            - "release/**"
+
+    pull_request:
+        branches:
+            - main
+            - dev
+
+permissions:
+    contents: read
+    checks: write
+
+jobs:
+    build-and-test:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                include:
+                    - os: windows-2025-vs2026
+                      preset: msvc-release
+
+                    - os: ubuntu-latest
+                      preset: gcc-release
+
+                    - os: macos-latest
+                      preset: clang-release
+
+            fail-fast: false
+
+        steps:
+            - uses: actions/checkout@v4
+
+            # ======================
+            # CONFIGURE
+            # ======================
+            - name: Configure CMake
+              run: cmake --preset ${{ matrix.preset }}
+
+            # ======================
+            # BUILD
+            # ======================
+            - name: Build
+              run: cmake --build --preset ${{ matrix.preset }} --config Release
+
+            # ======================
+            # TEST
+            # ======================
+            - name: Test
+              run: ctest --preset ${{ matrix.preset }} -C Release --output-on-failure
